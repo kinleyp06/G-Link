@@ -1,4 +1,7 @@
-// <Table columns={[{ key: 'id', header: 'ID', render: (row) => <b>{row.id}</b> }]} rows={[...]} emptyMessage="No bookings yet" />
+// F-01 Make the look of the website (Tandin)
+// <Table columns={[{ key: 'id', header: 'ID' }, { key: 'status', header: 'Status', render: (row) => <b>{row.status}</b> }]}
+//        rows={[...]} rowKey="id" emptyMessage="No bookings yet" />
+
 export default function Table({ columns, rows, rowKey = 'id', emptyMessage = 'Nothing to show yet.' }) {
   return (
     <div className="table-wrap">

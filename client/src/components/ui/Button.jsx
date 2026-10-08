@@ -1,3 +1,4 @@
+// F-01 Make the look of the website (Tandin)
 // <Button variant="primary" | "secondary" | "danger" loading disabled>Text</Button>
 export default function Button({
   variant = 'primary',

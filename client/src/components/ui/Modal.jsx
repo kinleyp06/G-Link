@@ -1,3 +1,4 @@
+// F-01 Make the look of the website (Tandin)
 // <Modal open={open} title="Are you sure?" onClose={() => setOpen(false)} footer={<Button>OK</Button>}>text</Modal>
 // Closes with the Escape key or a click on the dark background.
 import { useEffect, useId, useRef } from 'react';

@@ -1,8 +1,12 @@
+/* F-01 Make the look of the website (Tandin)
+   The colours, fonts and spacing for the whole site. Use these variables, never raw colours. */
 :root {
+  /* Brand */
   --color-primary: #2e4a7a;
   --color-primary-hover: #243b63;
   --color-primary-soft: #e3ebf6;
 
+  /* Meaning */
   --color-success: #1e7b34;
   --color-success-soft: #e8f6ee;
   --color-danger: #b03a3a;
@@ -12,18 +16,21 @@
   --color-info: #3b5b92;
   --color-info-soft: #eef3fb;
 
+  /* Booking status colours (used by the status badge, F-15) */
   --status-pending: #b45309;
   --status-approved: #1e7b34;
   --status-rejected: #b03a3a;
   --status-cancelled: #666666;
   --status-completed: #3b5b92;
 
+  /* Neutrals */
   --color-text: #1a1a1a;
   --color-muted: #666666;
   --color-border: #c8ceda;
   --color-bg: #f5f7fb;
   --color-surface: #ffffff;
 
+  /* Fonts (system fonts: nothing to download) */
   --font-body: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --text-sm: 0.875rem;
   --text-md: 1rem;
@@ -31,6 +38,7 @@
   --text-xl: 1.625rem;
   --text-2xl: 2rem;
 
+  /* Spacing: multiples of 4px */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -39,6 +47,7 @@
   --space-6: 2rem;
   --space-7: 3rem;
 
+  /* Shape */
   --radius: 6px;
   --radius-lg: 10px;
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.12);

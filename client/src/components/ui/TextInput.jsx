@@ -1,4 +1,5 @@
-// <TextInput label="Email" type="email" error="Message" help="Hint" />
+// F-01 Make the look of the website (Tandin)
+// <TextInput label="Email" type="email" value={...} onChange={...} error="Message" help="Hint" />
 import { useId } from 'react';
 
 export default function TextInput({ label, error, help, id, type = 'text', className = '', ...rest }) {
@@ -35,4 +36,4 @@ export default function TextInput({ label, error, help, id, type = 'text', class
       )}
     </div>
   );
-}c
+}

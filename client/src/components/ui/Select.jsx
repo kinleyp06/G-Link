@@ -1,3 +1,4 @@
+// F-01 Make the look of the website (Tandin)
 // <Select label="Gender" options={[{ value: 'Male', label: 'Male' }]} placeholder="Choose..." error="..." />
 import { useId } from 'react';
 
@@ -22,7 +23,9 @@ export default function Select({ label, options = [], placeholder, error, help, 
         aria-describedby={describedBy}
         {...rest}
       >
-        {placeholder && <option value="">{placeholder}</option>}
+        {placeholder && (
+          <option value="">{placeholder}</option>
+        )}
         {options.map((o) => (
           <option key={o.value} value={o.value}>
             {o.label}

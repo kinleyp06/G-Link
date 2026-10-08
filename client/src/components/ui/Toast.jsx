@@ -1,6 +1,7 @@
-// ToastProvider is already wrapped around the app in main.jsx. Anywhere:
+// F-01 Make the look of the website (Tandin)
+// Wrap the app in <ToastProvider> once (already done in main.jsx). Then anywhere:
 //   const toast = useToast();
-//   toast.success('Profile saved');  toast.error('Wrong email or password');  toast.info('Check your email');
+//   toast.success('Profile saved');   toast.error('Wrong email or password');   toast.info('Check your email');
 import { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
 
 const ToastContext = createContext(null);
