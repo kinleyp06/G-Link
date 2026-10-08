@@ -1,5 +1,0 @@
-# Never commit real credentials or local logs
-.env
-.env.*
-!.env.example
-*.log
