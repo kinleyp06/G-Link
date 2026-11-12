@@ -1,9 +1,15 @@
 // MySQL connection pool. dateStrings keeps DATE values as 'YYYY-MM-DD' text (no timezone surprises).
+const fs = require('fs');
 const mysql = require('mysql2/promise');
 const env = require('./env');
 
+const { ssl, sslCa, ...db } = env.db;
+// Local MySQL: no SSL. Shared online MySQL: encrypted, checked against the provider's certificate.
+const sslOptions = ssl ? { rejectUnauthorized: true, ...(sslCa ? { ca: fs.readFileSync(sslCa, 'utf8') } : {}) } : undefined;
+
 const pool = mysql.createPool({
-  ...env.db,
+  ...db,
+  ssl: sslOptions,
   waitForConnections: true,
   connectionLimit: 10,
   dateStrings: true,
