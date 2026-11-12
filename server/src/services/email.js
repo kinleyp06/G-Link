@@ -5,7 +5,33 @@
 const nodemailer = require('nodemailer');
 const env = require('../config/env');
 
-const missingSettings = () => ['SMTP_HOST', 'SMTP_USER', 'SMTP_PASS'].filter((k) => !process.env[k]);
+// Two ways to send: Gmail over SMTP (laptops), or the Brevo email API over HTTPS (online hosts such as
+// Render's free plan, which block SMTP). Brevo is used when BREVO_API_KEY is set.
+const useBrevo = () => Boolean(process.env.BREVO_API_KEY);
+const missingSettings = () => (useBrevo()
+  ? ['BREVO_SENDER_EMAIL'].filter((k) => !process.env[k] && !process.env.SMTP_USER)
+  : ['SMTP_HOST', 'SMTP_USER', 'SMTP_PASS'].filter((k) => !process.env[k]));
+
+// The "from" address for Brevo: BREVO_SENDER_EMAIL (a sender verified in Brevo), else SMTP_USER.
+function brevoSender() {
+  const email = process.env.BREVO_SENDER_EMAIL || process.env.SMTP_USER;
+  const name = (/^\s*"?([^"<]+?)"?\s*</.exec(env.smtp.from || '') || [])[1] || 'G-Link Guest House';
+  return { name, email };
+}
+
+async function brevo(path, body) {
+  const res = await fetch(`https://api.brevo.com/v3${path}`, {
+    method: body ? 'POST' : 'GET',
+    headers: { 'api-key': process.env.BREVO_API_KEY, accept: 'application/json', 'content-type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined,
+    signal: AbortSignal.timeout(15000),
+  });
+  if (!res.ok) {
+    const info = await res.json().catch(() => ({}));
+    throw new Error(`Brevo ${res.status}: ${info.message || res.statusText}`);
+  }
+  return res.json().catch(() => ({}));
+}
 
 let transporter = null;
 function getTransporter() {
@@ -15,6 +41,10 @@ function getTransporter() {
       port: env.smtp.port,
       secure: env.smtp.secure,
       auth: { user: env.smtp.user, pass: env.smtp.pass },
+      // Give up after 15 seconds instead of minutes if the email server cannot be reached.
+      connectionTimeout: 15000,
+      greetingTimeout: 15000,
+      socketTimeout: 30000,
     });
   }
   return transporter;
@@ -29,6 +59,16 @@ async function checkEmailSetup() {
     console.error('G-Link sends every confirmation and booking notice by real email, so the server needs an email account.');
     console.error('Gmail: turn on 2-Step Verification, create an App password, then see "Email setup" in SETUP_GUIDE.md.\n');
     process.exit(1);
+  }
+  if (useBrevo()) {
+    try {
+      await brevo('/account');
+      console.log(`Email ready (Brevo): sending as ${brevoSender().email}`);
+    } catch (err) {
+      console.error(`Email login failed (${err.message}). Check BREVO_API_KEY.`);
+      console.error('The website still runs, but emails will not be delivered until this is fixed.');
+    }
+    return;
   }
   try {
     await getTransporter().verify();
@@ -71,7 +111,17 @@ async function sendMail({ to, subject, text, button }) {
     return false;
   }
   try {
-    await getTransporter().sendMail({ from: env.smtp.from, to: recipients.join(', '), subject, text, html: toHtml(text, button) });
+    if (useBrevo()) {
+      await brevo('/smtp/email', {
+        sender: brevoSender(),
+        to: recipients.map((email) => ({ email })),
+        subject,
+        textContent: text,
+        htmlContent: toHtml(text, button),
+      });
+    } else {
+      await getTransporter().sendMail({ from: env.smtp.from, to: recipients.join(', '), subject, text, html: toHtml(text, button) });
+    }
     return true;
   } catch (err) {
     console.error(`Email failed (${subject}): ${err.message}`);
@@ -79,4 +129,4 @@ async function sendMail({ to, subject, text, button }) {
   }
 }
 
-module.exports = { sendMail, checkEmailSetup };
+module.exports = { sendMail, checkEmailSetup, brevoSender };
