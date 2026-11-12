@@ -3,6 +3,8 @@
 ```
 npm install
 copy .env.example .env      (PowerShell: Copy-Item .env.example .env) then fill in DB_PASSWORD and JWT_SECRET
+npm test                     unit tests (29, no database needed)
+npm run test:integration     integration tests (12, real server + MySQL test database g_link_test)
 npm run check-db             checks MySQL connection, the 12 tables and the payment_method column
 npm run test-email -- you@example.com   sends one test email (checks the Gmail settings in .env)
 npm run create-super-admin   creates the ICT unit Super Admin from .env
