@@ -344,6 +344,16 @@ CLIENT_URL=http://localhost:5173
 
 `SMTP_PASS` is the App password **without spaces**, not the normal Gmail password. Confirmation links open `CLIENT_URL`, so change it to the real website address when the site is deployed.
 
+### Email on Render (Brevo)
+
+Render's free plan blocks SMTP, so Gmail cannot send from there. Online, G-Link sends through **Brevo** (free, 300 emails a day) over HTTPS instead:
+1. Sign up at **brevo.com** with the team Gmail.
+2. **Senders, Domains & Dedicated IPs > Senders > Add a sender**: the team Gmail; click the link in the email Brevo sends.
+3. **SMTP & API > API keys > Generate a new API key**; copy it.
+4. On Render (server > Environment): `BREVO_API_KEY` = the key, `BREVO_SENDER_EMAIL` = the team Gmail. Save; the log then shows `Email ready (Brevo)`.
+
+On laptops leave `BREVO_API_KEY` empty: Gmail is used as before.
+
 ## One shared database for the whole team (optional)
 
 By default every laptop has its own MySQL and its own data. To let every laptop use **the same** accounts, bookings and bills, put one MySQL database online and point every laptop's `server/.env` at it. Then nobody installs MySQL or runs `all_in_one.sql` again; only `server` and `client` run on each laptop.

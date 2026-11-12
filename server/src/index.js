@@ -3,10 +3,10 @@ const env = require('./config/env');
 const app = require('./app');
 const { checkEmailSetup } = require('./services/email');
 
-// Email must work before the site opens: sign-up confirmation and every booking notice go by email.
-checkEmailSetup().then(() => {
-  app.listen(env.port, () => {
-    console.log(`G-Link API running on http://localhost:${env.port}`);
-    console.log(`Health check: http://localhost:${env.port}/api/health`);
-  });
+// Open the port first (hosts like Render wait for it), then check the email login in the background.
+// The server still stops if the email settings are missing: every notice goes by email.
+app.listen(env.port, () => {
+  console.log(`G-Link API running on http://localhost:${env.port}`);
+  console.log(`Health check: http://localhost:${env.port}/api/health`);
+  checkEmailSetup();
 });
