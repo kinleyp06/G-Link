@@ -1,0 +1,12 @@
+{
+  "name": "g-link-e2e",
+  "private": true,
+  "description": "End-to-end tests: a real browser opens the G-Link website and clicks through it",
+  "scripts": {
+    "test": "playwright test",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1"
+  }
+}
