@@ -344,6 +344,32 @@ CLIENT_URL=http://localhost:5173
 
 `SMTP_PASS` is the App password **without spaces**, not the normal Gmail password. Confirmation links open `CLIENT_URL`, so change it to the real website address when the site is deployed.
 
+## One shared database for the whole team (optional)
+
+By default every laptop has its own MySQL and its own data. To let every laptop use **the same** accounts, bookings and bills, put one MySQL database online and point every laptop's `server/.env` at it. Then nobody installs MySQL or runs `all_in_one.sql` again; only `server` and `client` run on each laptop.
+
+Any hosted MySQL 8 works. Example with **Aiven** (has a free MySQL plan; screen names may differ slightly):
+
+1. **One person** signs up at aiven.io > **Create service** > **MySQL** > the **Free** plan > a nearby region > create, and waits until it says *Running*.
+2. On the service's **Overview**, note **Host**, **Port**, **User** (`avnadmin`) and **Password**, and download the **CA certificate**. Save it as `server/ca.pem` (it is ignored by Git; give the file to teammates privately).
+3. **Build the database once**, from MySQL Workbench: new connection with that host, port, user and password; on the **SSL** tab choose *Require and verify CA* and pick `ca.pem`; **Test Connection**. Open `database/all_in_one.sql` and run it (lightning icon).
+4. **Every laptop**, in `server/.env`:
+   ```
+   DB_HOST=the host from step 2
+   DB_PORT=the port from step 2
+   DB_USER=avnadmin
+   DB_PASSWORD=the password from step 2
+   DB_NAME=g_link
+   DB_SSL=true
+   DB_SSL_CA=ca.pem
+   JWT_SECRET=the same long secret on every laptop
+   ```
+   plus the same Gmail settings. Then `npm run check-db` must show all `OK`.
+5. **Only one person** runs `npm run create-super-admin` (the account is then in the shared database for everyone).
+6. Each laptop runs `npm run dev` in `server` and in `client` as usual.
+
+Keep the database password, `ca.pem` and `.env` private: share them directly with teammates, never on GitHub or in screenshots. A database change (a new file in `database/updates/`) is then run **once** on the shared database, not on every laptop.
+
 ## Pictures (rooms, hall, floor maps)
 
 The site uses the team's photos of the CST guest house (22 pictures, resized and compressed to about 2 MB in total) and a ground floor plan drawn from the team's sketch. Where they appear: Home (evening banner, the building, Facilities: dining room, canteen, outdoor dining, conference hall, Suite 1), Rooms (3-bed room photos for every room, suite photos for rooms of type "Suite"), Meeting hall, Floor map and Sign in. The full list is in `client/public/images/README.md`. To change a picture, save a new file with the same name.
@@ -358,6 +384,23 @@ After pulling these changes:
 3. `cd server` > `npm run check-db` > `npm run dev`, and `cd client` > `npm run dev`.
 
 ---
+
+## CI/CD (GitHub Actions)
+
+The file `.github/workflows/ci-cd.yml` runs on GitHub by itself:
+
+- **CI, on every push and pull request:** builds the website, builds a fresh MySQL database from `database/all_in_one.sql`, starts the server against it and checks it answers (health check, the 10 rooms with 2 VIP suites, the meeting hall, Super Admin sign in). A green tick means it works; a red X means something is broken. Open the **Actions** tab to see which step failed.
+- **CD, on a push or merge to `main` only, after CI passes:** asks Render to deploy the new server and website.
+
+To switch on CD (once):
+1. In Render, open the **server** service > **Settings** > **Deploy Hook** > copy the URL. Do the same for the **website** (static site).
+2. In GitHub, open the repo > **Settings > Secrets and variables > Actions > New repository secret**:
+   `RENDER_DEPLOY_HOOK_SERVER` = the server's hook URL, `RENDER_DEPLOY_HOOK_CLIENT` = the website's hook URL.
+3. In Render, set **Auto-Deploy** to **Off** on both services, so only code that passed CI goes live.
+
+Until the secrets are added, CI still runs and the deploy step is skipped with a warning.
+Database changes are not deployed automatically: run a new file from `database/updates/` on the online database yourself.
+To make `main` safe: GitHub > **Settings > Branches > Add rule** for `main` > tick **Require status checks to pass** and choose "Website builds" and "Server and database work".
 
 ## Decisions made while building (check these with your documents)
 
@@ -399,4 +442,7 @@ After pulling these changes:
 | `check-db` OK but sign-up fails with "Unknown column 'is_rub_member'" | Run `database/updates/02_rub_non_rub_and_hall_in_guest_house.sql` once |
 | International guest booking fails with "Unknown column 'created_by'" or "cannot be null" | Run `database/updates/03_international_guest_bookings.sql` once |
 | `check-db` says `MISSING rooms.floor`, or rooms still show 101-203 | Run `database/updates/04_real_rooms_floors_vip_suites.sql` once |
+| `Cannot connect to MySQL: Server does not support secure connection` | `DB_SSL=true` is set but the database is local: set `DB_SSL=false` (true only for the shared online database) |
+| `ENOENT ... ca.pem` | Save the online database's CA certificate as `server/ca.pem`, or fix `DB_SSL_CA` |
+| Shared database: confirmation link says the link is invalid | Every laptop must use the same `JWT_SECRET` in `server/.env` |
 | `mysql` is not recognised in PowerShell | Use MySQL Workbench instead, or add `C:\Program Files\MySQL\MySQL Server 8.0\bin` to PATH |
