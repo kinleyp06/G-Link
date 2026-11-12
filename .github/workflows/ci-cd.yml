@@ -10,6 +10,9 @@ concurrency:
   group: ci-cd-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  NODE_VERSION: 22
+
 jobs:
   website:
     name: Website builds
@@ -21,14 +24,14 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: client/package-lock.json
       - run: npm ci
       - run: npm run build
 
   server:
-    name: Server and database work
+    name: Unit and integration tests
     runs-on: ubuntu-latest
     services:
       mysql:
@@ -41,82 +44,95 @@ jobs:
           --health-cmd="mysqladmin ping -h 127.0.0.1 -pci_root_password"
           --health-interval=5s --health-timeout=5s --health-retries=20
     env:
-      PORT: 5000
-      CLIENT_URL: http://localhost:5173
       DB_HOST: 127.0.0.1
       DB_PORT: 3306
       DB_USER: root
       DB_PASSWORD: ci_root_password
       DB_NAME: g_link
       DB_SSL: 'false'
-      JWT_SECRET: ci_only_secret_not_used_anywhere_else
-      SMTP_HOST: 127.0.0.1
-      SMTP_PORT: 2525
-      SMTP_SECURE: 'false'
-      SMTP_USER: ci@example.com
-      SMTP_PASS: ci_fake_password
-      MAIL_FROM: G-Link CI <ci@example.com>
-      SUPER_ADMIN_EMAIL: ci-admin@example.com
-      SUPER_ADMIN_PASSWORD: CiAdmin123!
-      SUPER_ADMIN_FIRST_NAME: CI
-      SUPER_ADMIN_LAST_NAME: Admin
+    defaults:
+      run:
+        working-directory: server
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: server/package-lock.json
 
       - name: Install server packages
-        working-directory: server
         run: npm ci
 
       - name: Check every server file for syntax errors
-        working-directory: server
-        run: for f in $(find src scripts -name '*.js'); do node --check "$f"; done
+        run: for f in $(find src scripts tests -name '*.js'); do node --check "$f"; done
+
+      - name: Unit tests
+        run: npm test
 
       - name: Build the database from all_in_one.sql
-        run: mysql -h 127.0.0.1 -P 3306 -u root -pci_root_password < database/all_in_one.sql
+        run: mysql -h 127.0.0.1 -P 3306 -u root -pci_root_password < ../database/all_in_one.sql
 
       - name: Check all tables and columns exist
-        working-directory: server
         run: |
           npm run check-db | tee check-db.txt
           if grep -q MISSING check-db.txt; then echo "::error::A table or column is missing"; exit 1; fi
 
-      - name: Create the Super Admin
-        working-directory: server
-        run: npm run create-super-admin
+      - name: Integration tests
+        run: npm run test:integration
 
-      - name: Start the server and check it answers
-        working-directory: server
+  browser:
+    name: Browser tests
+    runs-on: ubuntu-24.04
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: ci_root_password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -pci_root_password"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: ci_root_password
+      DB_SSL: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install packages
         run: |
-          node src/index.js > server.log 2>&1 &
-          for i in $(seq 1 30); do
-            if curl -sf http://localhost:5000/api/health > health.json; then break; fi
-            sleep 1
-          done
-          cat health.json; echo
-          grep -q '"database":"connected"' health.json
+          npm ci --prefix server
+          npm ci --prefix client
+          npm ci --prefix e2e
 
-          curl -sf "http://localhost:5000/api/rooms/availability?guesthouse_id=1&check_in=2030-01-10&check_out=2030-01-12" > rooms.json
-          node -e "const r=require('./rooms.json').rooms; console.log(r.length+' rooms'); if (r.length!==10 || r.filter(x=>x.vip_only).length!==2) process.exit(1)"
+      - name: Install the test browser
+        working-directory: e2e
+        run: npx playwright install --with-deps chromium
 
-          curl -sf "http://localhost:5000/api/halls/1/availability?start_date=2030-01-10&end_date=2030-01-10" | grep -q '"available":true'
+      - name: Browser tests
+        working-directory: e2e
+        run: npx playwright test
 
-          curl -sf -X POST http://localhost:5000/api/auth/login -H 'Content-Type: application/json' \
-            -d '{"email":"ci-admin@example.com","password":"CiAdmin123!"}' | grep -q '"token"'
-          echo "Server checks passed"
-
-      - name: Show the server log if something failed
+      - name: Save the test report
         if: failure()
-        working-directory: server
-        run: cat server.log || true
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-test-report
+          path: |
+            e2e/playwright-report
+            e2e/test-results
+          retention-days: 7
 
   deploy:
     name: Deploy to Render
-    needs: [website, server]
+    needs: [website, server, browser]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
