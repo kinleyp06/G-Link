@@ -130,9 +130,40 @@ jobs:
             e2e/test-results
           retention-days: 7
 
+  docker:
+    name: Docker images
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the images
+        run: docker compose build
+
+      - name: Settings for the test run
+        run: |
+          printf 'SMTP_HOST=127.0.0.1\nSMTP_PORT=2525\nSMTP_SECURE=false\nSMTP_USER=ci@test.gl\nSMTP_PASS=x\nJWT_SECRET=ci_docker_secret\n' > server/.env
+
+      - name: Start the database, server and website
+        run: docker compose up -d --wait --wait-timeout 300
+
+      - name: Check the website reaches the server and the database
+        run: |
+          curl -sf http://localhost:8080/ > /dev/null
+          curl -sf http://localhost:8080/rooms > /dev/null
+          curl -sf http://localhost:8080/api/health | tee health.json
+          grep -q '"database":"connected"' health.json
+
+      - name: Show the logs
+        if: failure()
+        run: docker compose logs
+
+      - name: Stop everything
+        if: always()
+        run: docker compose down -v
+
   deploy:
     name: Deploy to Render
-    needs: [website, server, browser]
+    needs: [website, server, browser, docker]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
