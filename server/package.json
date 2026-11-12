@@ -8,7 +8,9 @@
     "start": "node src/index.js",
     "create-super-admin": "node scripts/createSuperAdmin.js",
     "check-db": "node scripts/checkDb.js",
-    "test-email": "node scripts/testEmail.js"
+    "test-email": "node scripts/testEmail.js",
+    "test": "node --test \"tests/unit/**/*.test.js\"",
+    "test:integration": "node --test --test-concurrency=1 \"tests/integration/**/*.test.js\""
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -20,6 +22,11 @@
     "nodemailer": "^6.9.16"
   },
   "devDependencies": {
-    "nodemon": "^3.1.7"
+    "mailparser": "^3.7.2",
+    "nodemon": "^3.1.7",
+    "smtp-server": "^3.13.6"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }
