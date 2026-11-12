@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" font-family="'IBM Plex Sans','Segoe UI',Arial,sans-serif">
+  <!-- Ground floor of the CST guest house, drawn from the team's sketch. Schematic, not to scale. -->
+  <rect width="800" height="600" fill="#ffffff"/>
+  <defs>
+    <pattern id="steps" width="14" height="14" patternUnits="userSpaceOnUse">
+      <rect width="14" height="14" fill="#f6efe4"/>
+      <line x1="0" y1="0" x2="0" y2="14" stroke="#A07A43" stroke-width="2"/>
+    </pattern>
+  </defs>
+
+  <text x="40" y="44" font-size="22" font-weight="700" fill="#002789">Ground floor</text>
+  <text x="40" y="68" font-size="13" fill="#5b6070">Rooms 1–4 and Suite 1. Rooms 5–8 and Suite 2 are on the first floor. Schematic, not to scale.</text>
+
+  <!-- Suite / stairs / dining block on the right -->
+  <rect x="560" y="96" width="200" height="120" fill="#e7ebf6" stroke="#002789" stroke-width="3"/>
+  <text x="660" y="146" font-size="17" font-weight="700" fill="#002789" text-anchor="middle">Suite 1</text>
+  <text x="660" y="166" font-size="12" fill="#5b6070" text-anchor="middle">bedroom, lounge, kitchenette</text>
+  <rect x="596" y="176" width="128" height="20" rx="4" fill="#A07A43"/>
+  <text x="660" y="190" font-size="11" font-weight="700" fill="#ffffff" text-anchor="middle">COLLEGE VIP ONLY</text>
+
+  <rect x="560" y="216" width="200" height="92" fill="url(#steps)" stroke="#002789" stroke-width="3"/>
+  <rect x="598" y="242" width="124" height="40" rx="4" fill="#ffffff" opacity="0.92"/>
+  <text x="660" y="259" font-size="13" font-weight="700" fill="#002789" text-anchor="middle">Stairs</text>
+  <text x="660" y="275" font-size="11" fill="#5b6070" text-anchor="middle">to conference hall</text>
+
+  <rect x="560" y="308" width="200" height="200" fill="#ffffff" stroke="#002789" stroke-width="3"/>
+  <text x="660" y="400" font-size="17" font-weight="700" fill="#002789" text-anchor="middle">Dining hall</text>
+  <text x="660" y="422" font-size="12" fill="#5b6070" text-anchor="middle">meals and lounge</text>
+
+  <!-- Main entrance -->
+  <line x1="760" y1="470" x2="760" y2="500" stroke="#ffffff" stroke-width="6"/>
+  <path d="M790 485 L768 485 M776 477 L768 485 L776 493" stroke="#A07A43" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="784" y="530" font-size="12" font-weight="700" fill="#7f5f30" text-anchor="end">Main entrance</text>
+
+  <!-- Guest-room wing on the left -->
+  <rect x="60" y="308" width="500" height="200" fill="#ffffff" stroke="#002789" stroke-width="3"/>
+  <!-- corridor -->
+  <rect x="160" y="383" width="400" height="50" fill="#f3f4f7"/>
+  <line x1="160" y1="383" x2="560" y2="383" stroke="#002789" stroke-width="2"/>
+  <line x1="160" y1="433" x2="560" y2="433" stroke="#002789" stroke-width="2"/>
+  <text x="360" y="413" font-size="12" fill="#5b6070" text-anchor="middle">Corridor · rooms 1–4</text>
+  <!-- rooms: two on each side -->
+  <line x1="360" y1="308" x2="360" y2="383" stroke="#002789" stroke-width="2"/>
+  <line x1="360" y1="433" x2="360" y2="508" stroke="#002789" stroke-width="2"/>
+  <g font-size="13" font-weight="600" fill="#002789" text-anchor="middle">
+    <text x="260" y="350">Room</text>
+    <text x="460" y="350">Room</text>
+    <text x="260" y="478">Room</text>
+    <text x="460" y="478">Room</text>
+  </g>
+  <g font-size="11" fill="#5b6070" text-anchor="middle">
+    <text x="260" y="366">3 beds</text><text x="460" y="366">3 beds</text>
+    <text x="260" y="494">3 beds</text><text x="460" y="494">3 beds</text>
+  </g>
+  <!-- doors onto the corridor -->
+  <g stroke="#ffffff" stroke-width="5">
+    <line x1="300" y1="383" x2="326" y2="383"/><line x1="500" y1="383" x2="526" y2="383"/>
+    <line x1="300" y1="433" x2="326" y2="433"/><line x1="500" y1="433" x2="526" y2="433"/>
+    <line x1="560" y1="392" x2="560" y2="424"/>
+  </g>
+  <g stroke="#A07A43" stroke-width="2" fill="none">
+    <path d="M300 383 A26 26 0 0 0 326 357"/><path d="M500 383 A26 26 0 0 0 526 357"/>
+    <path d="M300 433 A26 26 0 0 1 326 459"/><path d="M500 433 A26 26 0 0 1 526 459"/>
+  </g>
+  <!-- stairs at the far end -->
+  <rect x="60" y="308" width="100" height="200" fill="url(#steps)" stroke="#002789" stroke-width="3"/>
+  <rect x="68" y="390" width="84" height="38" rx="4" fill="#ffffff" opacity="0.92"/>
+  <text x="110" y="406" font-size="13" font-weight="700" fill="#002789" text-anchor="middle">Stairs</text>
+  <text x="110" y="421" font-size="11" fill="#5b6070" text-anchor="middle">to first floor</text>
+
+  <!-- legend -->
+  <g font-size="12" fill="#5b6070">
+    <rect x="40" y="548" width="18" height="12" fill="url(#steps)" stroke="#002789"/><text x="66" y="559">Stairs</text>
+    <path d="M130 560 A12 12 0 0 0 142 548" stroke="#A07A43" stroke-width="2" fill="none"/><line x1="130" y1="560" x2="142" y2="560" stroke="#002789" stroke-width="2"/><text x="152" y="559">Door</text>
+  </g>
+</svg>
