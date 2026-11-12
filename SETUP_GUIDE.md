@@ -397,11 +397,34 @@ Three levels, all automatic, all using their own database **`g_link_test`** (mad
 
 Each test prints ✔ or ✖ with its name, so a failure says exactly which feature broke. The manual test-case document is still needed for what a machine cannot judge: how pages look, real Gmail delivery, phones.
 
+## Docker
+
+Docker runs the whole project (database, server and website) in three containers with one command. Nobody needs Node or MySQL installed; only **Docker Desktop** (docker.com, then restart the laptop).
+
+| File | What it does |
+|---|---|
+| `server/Dockerfile` | Node 22 image with the server; runs `node src/index.js` |
+| `client/Dockerfile` | Builds the website, then serves it with nginx |
+| `client/nginx.conf` | Sends `/api` to the server container; every other page goes to the website |
+| `docker-compose.yml` | Starts `db` (MySQL 8, built from `all_in_one.sql` the first time), `server` and `client` together |
+| `.dockerignore` (server, client) | Keeps `node_modules`, `.env` and certificates out of the images |
+
+Run it (from the project folder, with Docker Desktop open):
+1. `server/.env` must have the email settings (SMTP_*) and JWT_SECRET. The database lines are ignored: Docker uses its own MySQL.
+2. `docker compose up --build` (first time takes a few minutes).
+3. Open **http://localhost:8080**. The API is also on http://localhost:5000/api/health.
+4. Create the Super Admin (in a second terminal): `docker compose exec server npm run create-super-admin`
+5. Stop: `Ctrl+C`, then `docker compose down`. Your data stays. `docker compose down -v` deletes the Docker database so it is rebuilt from `all_in_one.sql` next time.
+
+Docker's MySQL is on port **3307** on the laptop (so it does not clash with your own MySQL on 3306). Workbench: host 127.0.0.1, port 3307, user root, password `glink_root`.
+
+On Render the server can run from `server/Dockerfile` (Language: **Docker**). The website stays a Static Site.
+
 ## CI/CD (GitHub Actions)
 
 The file `.github/workflows/ci-cd.yml` runs on GitHub by itself:
 
-- **On every push and pull request:** **Website builds** (the website compiles), **Unit and integration tests** (fresh MySQL 8 from `all_in_one.sql`, all tables checked, then both test levels), **Browser tests** (the 10 end-to-end tests in Chrome). A green tick means all passed; a red X means something broke: open the **Actions** tab, the failed step lists the failing test by name. For browser tests, a report with screenshots is saved under the run's **Artifacts**.
+- **On every push and pull request:** **Website builds** (the website compiles), **Unit and integration tests** (fresh MySQL 8 from `all_in_one.sql`, all tables checked, then both test levels), **Browser tests** (the 10 end-to-end tests in Chrome), **Docker images** (builds the three containers, starts them together and checks the website reaches the server and the database). A green tick means all passed; a red X means something broke: open the **Actions** tab, the failed step lists the failing test by name. For browser tests, a report with screenshots is saved under the run's **Artifacts**.
 - **On a push or merge to `main` only, after all checks pass:** asks Render to deploy the new server and website.
 
 To switch on deploys (once):
@@ -412,7 +435,7 @@ To switch on deploys (once):
 
 Until the secrets are added, the checks still run and the deploy step is skipped with a warning.
 Database changes are not deployed automatically: run a new file from `database/updates/` on the online database yourself.
-To make `main` safe: GitHub > **Settings > Branches > Add rule** for `main` > tick **Require status checks to pass** and choose "Website builds", "Unit and integration tests" and "Browser tests".
+To make `main` safe: GitHub > **Settings > Branches > Add rule** for `main` > tick **Require status checks to pass** and choose "Website builds", "Unit and integration tests", "Browser tests" and "Docker images".
 
 ## Decisions made while building (check these with your documents)
 
