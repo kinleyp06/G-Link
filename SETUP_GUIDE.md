@@ -385,22 +385,34 @@ After pulling these changes:
 
 ---
 
+## Automatic tests
+
+Three levels, all automatic, all using their own database **`g_link_test`** (made fresh each run, so your real data is never touched) and a fake mailbox (no real emails are sent):
+
+| Level | What it checks | Where | Run it |
+|---|---|---|---|
+| **Unit tests** (29) | One function at a time, no database: prices and GST, nights between dates, RUB / Non-RUB from the profile, staff ID and gender rules, booking-form rules, hall dates | `server/tests/unit/` | `cd server` then `npm test` |
+| **Integration tests** (12) | The real server + MySQL + emails: sign-up and email confirmation, quotes, VIP suites refused, booking + approval + bill, sharing by gender, check-in/out with payment method, international guest, meeting hall, roles | `server/tests/integration/` | `cd server` then `npm run test:integration` (MySQL must be running; uses `DB_HOST`, `DB_USER`, `DB_PASSWORD` from `server/.env`) |
+| **Browser (end-to-end) tests** (10) | A real Chrome opens the website and clicks through it: visitor pages, sign up as a RUB member, confirm the email, book a bed, admin approves, incharge checks the staff ID, checks in and out with mBOB, guest blocked from admin pages | `e2e/tests/` | Once: `cd e2e`, `npm install`, `npx playwright install chromium`. Then `npm test` (your own `npm run dev` can keep running: the tests use ports 5050, 5051 and 5174) |
+
+Each test prints ✔ or ✖ with its name, so a failure says exactly which feature broke. The manual test-case document is still needed for what a machine cannot judge: how pages look, real Gmail delivery, phones.
+
 ## CI/CD (GitHub Actions)
 
 The file `.github/workflows/ci-cd.yml` runs on GitHub by itself:
 
-- **CI, on every push and pull request:** builds the website, builds a fresh MySQL database from `database/all_in_one.sql`, starts the server against it and checks it answers (health check, the 10 rooms with 2 VIP suites, the meeting hall, Super Admin sign in). A green tick means it works; a red X means something is broken. Open the **Actions** tab to see which step failed.
-- **CD, on a push or merge to `main` only, after CI passes:** asks Render to deploy the new server and website.
+- **On every push and pull request:** **Website builds** (the website compiles), **Unit and integration tests** (fresh MySQL 8 from `all_in_one.sql`, all tables checked, then both test levels), **Browser tests** (the 10 end-to-end tests in Chrome). A green tick means all passed; a red X means something broke: open the **Actions** tab, the failed step lists the failing test by name. For browser tests, a report with screenshots is saved under the run's **Artifacts**.
+- **On a push or merge to `main` only, after all checks pass:** asks Render to deploy the new server and website.
 
-To switch on CD (once):
+To switch on deploys (once):
 1. In Render, open the **server** service > **Settings** > **Deploy Hook** > copy the URL. Do the same for the **website** (static site).
 2. In GitHub, open the repo > **Settings > Secrets and variables > Actions > New repository secret**:
    `RENDER_DEPLOY_HOOK_SERVER` = the server's hook URL, `RENDER_DEPLOY_HOOK_CLIENT` = the website's hook URL.
-3. In Render, set **Auto-Deploy** to **Off** on both services, so only code that passed CI goes live.
+3. In Render, set **Auto-Deploy** to **Off** on both services, so only code that passed every check goes live.
 
-Until the secrets are added, CI still runs and the deploy step is skipped with a warning.
+Until the secrets are added, the checks still run and the deploy step is skipped with a warning.
 Database changes are not deployed automatically: run a new file from `database/updates/` on the online database yourself.
-To make `main` safe: GitHub > **Settings > Branches > Add rule** for `main` > tick **Require status checks to pass** and choose "Website builds" and "Server and database work".
+To make `main` safe: GitHub > **Settings > Branches > Add rule** for `main` > tick **Require status checks to pass** and choose "Website builds", "Unit and integration tests" and "Browser tests".
 
 ## Decisions made while building (check these with your documents)
 
