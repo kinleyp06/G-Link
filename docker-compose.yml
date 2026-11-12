@@ -1,0 +1,48 @@
+name: g-link
+
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-glink_root}
+    volumes:
+      - db-data:/var/lib/mysql
+      - ./database/all_in_one.sql:/docker-entrypoint-initdb.d/all_in_one.sql:ro
+    ports:
+      - "3307:3306"
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -p$$MYSQL_ROOT_PASSWORD"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  server:
+    build: ./server
+    env_file:
+      - path: ./server/.env
+        required: false
+    environment:
+      PORT: 5000
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-glink_root}
+      DB_NAME: g_link
+      DB_SSL: "false"
+      DB_SSL_CA: ""
+      CLIENT_URL: http://localhost:8080
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "5000:5000"
+
+  client:
+    build: ./client
+    depends_on:
+      - server
+    ports:
+      - "8080:80"
+
+volumes:
+  db-data:
