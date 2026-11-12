@@ -1,5 +1,6 @@
 // Loads .env and gives every file one place to read settings from.
 require('dotenv').config();
+const path = require('path');
 
 const env = {
   port: Number(process.env.PORT) || 5000,
@@ -10,6 +11,10 @@ const env = {
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '',
     database: process.env.DB_NAME || 'g_link',
+    // Online (shared) MySQL needs an encrypted connection: DB_SSL=true, and DB_SSL_CA = the
+    // certificate file the provider gives you (path from the server folder, e.g. ca.pem).
+    ssl: String(process.env.DB_SSL).toLowerCase() === 'true',
+    sslCa: process.env.DB_SSL_CA ? path.resolve(__dirname, '../..', process.env.DB_SSL_CA) : '',
   },
   jwtSecret: process.env.JWT_SECRET || 'dev_only_secret_change_me',
   gstPercent: Number(process.env.GST_PERCENT) || 5,

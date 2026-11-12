@@ -1,5 +1,5 @@
 // End-to-end tests: Playwright starts a test server (fresh g_link_test database, fake mailbox)
-// and the website on port 5174, then a real Chrome browser clicks through the site.
+// and the built website on port 5174, then a real Chrome browser clicks through the site.
 // Run from this folder: npm install, npx playwright install chromium, npm test
 const { defineConfig, devices } = require('@playwright/test');
 
@@ -24,11 +24,13 @@ module.exports = defineConfig({
       timeout: 60_000,
     },
     {
-      command: 'npm --prefix ../client run dev -- --port 5174 --strictPort',
+      // The built website (like the live site), not the dev server: the dev server can reload a page
+      // mid-test when it finds new packages, which made tests fail at random on GitHub.
+      command: 'npm --prefix ../client run build && npm --prefix ../client run preview -- --port 5174 --strictPort',
       url: 'http://localhost:5174',
       env: { API_PROXY_TARGET: 'http://127.0.0.1:5050' },
       reuseExistingServer: false,
-      timeout: 60_000,
+      timeout: 180_000,
     },
   ],
 });

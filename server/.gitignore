@@ -7,3 +7,6 @@ dist/
 Thumbs.db
 .vscode/*
 !.vscode/extensions.json
+
+# certificate for the shared online database
+*.pem

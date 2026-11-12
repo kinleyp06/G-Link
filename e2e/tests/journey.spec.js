@@ -3,7 +3,9 @@
 // the incharge checks them in, then out with mBOB. The steps run in order and share the same guest.
 const { test, expect } = require('@playwright/test');
 
-const guest = { first: 'Tshering', last: 'Wangmo', email: 'tshering@test.gl', password: 'Password1', staffId: 'CST2024' };
+// A new email and CID each time the file loads, so a retry can sign up again without "already registered".
+const run = Date.now().toString().slice(-6);
+const guest = { first: 'Tshering', last: 'Wangmo', email: `tshering${run}@test.gl`, cid: `11506${run}`, password: 'Password1', staffId: 'CST2024' };
 const STAFF_PASSWORD = 'Password123!';
 
 async function signIn(page, email, password) {
@@ -20,7 +22,7 @@ test.describe.serial('a RUB member books a bed and stays one night', () => {
     await page.getByLabel('First name').fill(guest.first);
     await page.getByLabel('Last name').fill(guest.last);
     await page.getByLabel('Phone number').fill('17654321');
-    await page.getByLabel('Citizenship ID (CID)').fill('11506001234');
+    await page.getByLabel('Citizenship ID (CID)').fill(guest.cid);
     await page.getByLabel('Gender').selectOption('Female');
     await page.locator('label.switch').click(); // the RUB member switch, clicked as a person would
     await expect(page.getByRole('switch')).toBeChecked();
@@ -64,6 +66,7 @@ test.describe.serial('a RUB member books a bed and stays one night', () => {
     await page.getByRole('row').filter({ hasText: `${guest.first} ${guest.last}` }).click();
     await expect(page.getByText(`staff ID ${guest.staffId}`)).toBeVisible();
     await page.getByRole('button', { name: 'Approve' }).click();
+    await expect(page.getByText('Booking approved and bill created.')).toBeVisible(); // wait for the server before leaving the page
     await page.goto('/admin/payments');
     const bill = page.getByRole('row').filter({ hasText: `${guest.first} ${guest.last}` });
     await expect(bill).toContainText('Nu. 262.50');
