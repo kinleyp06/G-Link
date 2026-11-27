@@ -16,6 +16,9 @@ const pool = mysql.createPool({
   decimalNumbers: true,
 });
 
+// Online servers (Render, Aiven) run on UTC. Record NOW() times in Bhutan time (UTC+6) like the dates.
+pool.pool.on('connection', (conn) => { conn.query("SET time_zone = '+06:00'"); });
+
 // Runs fn(conn) inside a transaction. Commits if fn succeeds, rolls back if it throws.
 async function withTransaction(fn) {
   const conn = await pool.getConnection();
